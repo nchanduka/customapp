@@ -1,6 +1,6 @@
 **NOTES**
 
-1. Clone the Gir Repo.
+1. Clone the Git Repo.
 
 2. Make required changes to **generate()** function in the app.py to fit the requirements of the video to be generated.
 

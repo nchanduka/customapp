@@ -186,14 +186,13 @@ class Pipeline:
         try:
             # Check if streaming is requested
             stream = body.get("stream", False)        
-            chunks = self.search_chunks(user_message)
-            if not chunks:
-                return "I couldn't find any relevant information in the documentation database. Please try rephrasing your question or ensure the documentation has been indexed in Weaviate."
-            context = self.create_context(chunks)
+            #chunks = self.search_chunks(user_message)
+            #if not chunks:
+            #    return "I couldn't find any relevant information in the documentation database. Please try rephrasing your question or ensure the documentation has been indexed in Weaviate."
+            #context = self.create_context(chunks)
             enhanced_prompt = f"""You are a helpful technical documentation assistant. Answer the user's question based on the provided documentation context.
 
 DOCUMENTATION CONTEXT:
-{context}
 
 INSTRUCTIONS:
 - Provide detailed, step-by-step answers when applicable
@@ -207,11 +206,9 @@ USER QUESTION:
 
 DETAILED ANSWER:"""
             # 4. Generate response with LLM
-            logger.info(f"Generating response with context from {len(chunks)} chunks")
+            logger.info(f"Generating response with context from chunks")
             response = self.generate_with_llm(enhanced_prompt, stream=stream)            
             return response            
         except Exception as e:
             logger.error(f"Pipeline error: {e}", exc_info=True)
             return f"An error occurred while processing your request: {str(e)}"
-
-

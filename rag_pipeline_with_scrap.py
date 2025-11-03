@@ -308,7 +308,7 @@ class Pipeline:
             clean_title = clean_title[:100]  
             return clean_title
 
-        async def scrape_manual_main_block(self, url, browser):
+        async def scrape_manual_main_block(url, browser):
             page = await browser.new_page()
             try:
                 # GEÄNDERT: domcontentloaded + längerer Timeout
@@ -520,7 +520,7 @@ class Pipeline:
                     await asyncio.sleep(1)
                 return all_manuals_data
             finally:
-                await browser.close()
+                await page.close()
 
         async def download_pdf(url, browser):
             page = await browser.new_page()

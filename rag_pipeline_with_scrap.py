@@ -84,7 +84,7 @@ class Pipeline:
         #OLLAMA_MODEL: str = Field(default="llama3:8b")
 
     def __init__(self):
-        self.type = "manifold"
+        #self.type = "manifold"
         self.id = "rag_weaviate"
         self.name = "RAG "
 

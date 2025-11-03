@@ -322,7 +322,7 @@ class Pipeline:
                     try:
                         await page.wait_for_selector('main', timeout=8000)
                     except:
-                        print(f"Warning: Main selector not found for {url}, trying anyway...")
+                        logger.info(f"Warning: Main selector not found for {url}, trying anyway...")
                 
                 await page.wait_for_timeout(1000)
                 content = await page.content()
@@ -336,14 +336,14 @@ class Pipeline:
                         # Versuche auch ohne role attribute
                         main_block = soup.find('main')
                         if not main_block:
-                            print(f"No <main> block found for {url}")
+                            logger.info(f"No <main> block found for {url}")
                             return None
 
                 main_html = str(main_block)
                 return main_html
                 
             except Exception as e:
-                print(f"Error scraping {url}: {e}")
+                logger.error(f"Error scraping {url}: {e}")
                 return None
             finally:
                 await page.close()
@@ -356,7 +356,7 @@ class Pipeline:
                 await page.wait_for_timeout(3000)  # 3 Sekunden warten für JavaScript
                 content = await page.content()
             except Exception as e:
-                print(f"Error loading TOC page {url}: {e}")
+                logger.error(f"Error loading TOC page {url}: {e}")
                 return {"url": url, "toc": []}
             finally:
                 await page.close()
@@ -429,7 +429,7 @@ class Pipeline:
 
             async def scrape_node(node):
                 if 'url' in node and node['url']:
-                    print(f"Scraping TOC link: {node['title']} -> {node['url']}")
+                    logger.info(f"Scraping TOC link: {node['title']} -> {node['url']}")
                     main_html = await scrape_manual_main_block(node['url'], browser)
                     if main_html:
                         contents.append({
@@ -446,7 +446,7 @@ class Pipeline:
             for top_node in toc_data['toc']:
                 await scrape_node(top_node)
 
-            print(f"Scraped {len(contents)} sections from TOC")
+            logger.info(f"Scraped {len(contents)} sections from TOC")
             return contents
 
         async def scrape_hpe_manuals(page):
@@ -536,11 +536,11 @@ class Pipeline:
                 await page.goto(url, wait_until='domcontentloaded', timeout=60000)
                 await page.wait_for_timeout(5000)
                 if pdf_bytes:
-                    print(f"PDF downloaded (in memory): {len(pdf_bytes)} bytes")
+                    logger.info(f"PDF downloaded (in memory): {len(pdf_bytes)} bytes")
                     return pdf_bytes
                 return False
             except Exception as e:
-                print(f"Error: {e}")
+                logger.error(f"Error: {e}")
                 return False
             finally:
                 await page.close()
@@ -555,24 +555,24 @@ class Pipeline:
                 content_type = response.headers.get('content-type', '').lower()
                 if 'application/pdf' in content_type:
                     found_pdf = True
-                    print(f"PDF detected via network response: {response.url}")
+                    logger.info(f"PDF detected via network response: {response.url}")
 
             page.on("response", handle_response)            
             try:
-                print(f"Loading page to detect content type: {url}")
+                logger.info(f"Loading page to detect content type: {url}")
                 # GEÄNDERT: Längerer Timeout
                 await page.goto(url, wait_until='domcontentloaded', timeout=60000)
                 await page.wait_for_timeout(3000)
                 
                 if found_pdf:
-                    print("Confirmed: Page loads PDF content")
+                    logger.info("Confirmed: Page loads PDF content")
                     return True
                 else:
-                    print("No PDF content detected - treating as HTML")
+                    logger.info("No PDF content detected - treating as HTML")
                     return False
                     
             except Exception as e:
-                print(f"Error checking content type: {e}")
+                logger.error(f"Error checking content type: {e}")
                 return False
             finally:
                 await page.close()
@@ -580,13 +580,13 @@ class Pipeline:
         async def process_document(manual, browser, process_pdfs=True):
             url = manual['link']
             title = manual['title']
-            print(f"\n=== Processing document: {title} ===")
-            print(f"Date: {manual.get('date', 'Unknown')}")
-            print(f"URL: {url}")
-            print("Analyzing document type...")
+            logger.info(f"\n=== Processing document: {title} ===")
+            logger.info(f"Date: {manual.get('date', 'Unknown')}")
+            logger.info(f"URL: {url}")
+            logger.info("Analyzing document type...")
             is_pdf = await check_if_pdf(url, browser)
             if is_pdf and process_pdfs:
-                print("Document identified as PDF - starting download...")
+                logger.info("Document identified as PDF - starting download...")
                 pdf_bytes = await download_pdf(url, browser)
                 if pdf_bytes:
                     return {
@@ -598,14 +598,14 @@ class Pipeline:
                         'chunks': []
                     }
                 else:
-                    print(f"Failed to download PDF: {title}")
+                    logger.error(f"Failed to download PDF: {title}")
                     return None
             else:
-                print("Processing as HTML document - scraping TOC and content...")
+                logger.info("Processing as HTML document - scraping TOC and content...")
                 try:
                     toc_data = await toc_scraper(url, browser)
                     if not toc_data['toc']:
-                        print("No TOC found, trying direct content scraping...")
+                        logger.info("No TOC found, trying direct content scraping...")
                         page = await browser.new_page()
                         try:
                             # GEÄNDERT: domcontentloaded + längere Wartezeiten
@@ -616,7 +616,7 @@ class Pipeline:
                             try:
                                 await page.wait_for_selector('main', timeout=10000)
                             except:
-                                print("Main element not loading, trying anyway...")
+                                logger.info("Main element not loading, trying anyway...")
                             
                             content = await page.content()
                             soup = BeautifulSoup(content, 'html.parser')
@@ -633,9 +633,9 @@ class Pipeline:
                                     'url': url,
                                     'content': str(main_block)
                                 }]
-                                print(f"Found content with selector: {main_block.name}")
+                                logger.info(f"Found content with selector: {main_block.name}")
                             else:
-                                print("No main content found with any selector")
+                                logger.info("No main content found with any selector")
                                 return None
                         finally:
                             await page.close()
@@ -643,17 +643,17 @@ class Pipeline:
                         scraped_contents = await scrape_document_contents(toc_data, browser)
                     
                     if not scraped_contents:
-                        print("No content scraped")
+                        logger.info("No content scraped")
                         return None
                     
                     cleaned_entries = [clean_html_entry(entry) for entry in scraped_contents]
-                    print(f"HTML cleaned: {len(cleaned_entries)} sections")
+                    logger.info(f"HTML cleaned: {len(cleaned_entries)} sections")
                     
                     chunks = []
                     for idx, entry in enumerate(cleaned_entries):
                         text = entry.get("text_clean", "")
                         if not text or len(text) < 50:
-                            print(f"Skipping entry {idx} - too short or empty")
+                            logger.info(f"Skipping entry {idx} - too short or empty")
                             continue
                             
                         entry_title = entry.get("title", title)
@@ -665,10 +665,10 @@ class Pipeline:
                             chunk['date'] = manual.get('date', '')
                         chunks.extend(entry_chunks)
                     
-                    print(f"HTML chunked: {len(chunks)} chunks")
+                    logger.info(f"HTML chunked: {len(chunks)} chunks")
                     
                     if len(chunks) == 0:
-                        print("Warning: No chunks created from this document")
+                        logger.info("Warning: No chunks created from this document")
                         return None
                     
                     document_data = {
@@ -684,7 +684,7 @@ class Pipeline:
                     }
                     return document_data
                 except Exception as e:
-                    print(f"Error scraping HTML document: {e}")
+                    logger.error(f"Error scraping HTML document: {e}")
                     import traceback
                     traceback.print_exc()
                     return None
@@ -725,7 +725,7 @@ class Pipeline:
     # ============================================================
 
     def get_nvidia_embedding(self, text):
-        print(f"[DEBUG] Starting embedding request for text: {text[:60]}...")
+        logger.info(f"[DEBUG] Starting embedding request for text: {text[:60]}...")
         headers = {
             "Authorization": f"Bearer {self.valves.EMBEDDING_MODEL_API_KEY}",
             "Content-Type": "application/json",
@@ -739,7 +739,7 @@ class Pipeline:
         response = requests.post(f"{self.valves.EMBEDDING_MODEL_URL}/embeddings", headers=headers, json=payload, timeout=30)
         response.raise_for_status()
         result = response.json()
-        print(f"[DEBUG] Embedding response received.")
+        logger.info(f"[DEBUG] Embedding response received.")
         if 'data' in result and len(result['data']) > 0:
             return np.array(result['data'][0]['embedding'])
         else:
@@ -771,7 +771,7 @@ class Pipeline:
         with manual_chunks.batch.fixed_size(batch_size=10) as batch:
             for i, chunk in enumerate(chunks):
                 try:
-                    print(f"[{i+1}/{len(chunks)}] Processing chunk: {chunk['chunk_id']}")
+                    logger.info(f"[{i+1}/{len(chunks)}] Processing chunk: {chunk['chunk_id']}")
                     embedding = self.get_nvidia_embedding(chunk["text"])
                     
                     properties = {
@@ -792,9 +792,9 @@ class Pipeline:
                         properties=properties,
                         vector=embedding.tolist()
                     )
-                    print(f"  ✓ Added to batch")
+                    logger.info(f"  ✓ Added to batch")
                 except Exception as e:
-                    print(f"  ✗ Error with chunk {chunk['chunk_id']}: {e}")
+                    logger.info(f"  ✗ Error with chunk {chunk['chunk_id']}: {e}")
                     continue
 
     # ============================================================

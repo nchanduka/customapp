@@ -131,7 +131,7 @@ class Pipeline:
         if 'async_playwright' not in globals():
             raise RuntimeError("Playwright and BeautifulSoup required.")
 
-        def extract_row_metadata(self, row):
+        def extract_row_metadata(row):
             metadata = {
                 'date': ''
             }            
@@ -146,12 +146,12 @@ class Pipeline:
                     metadata['date'] = cell_text
             return metadata
 
-        def count_tokens(self, text):
+        def count_tokens(text):
             if not text or not text.strip():
                 return 0
             return len(self.tokenizer.encode(text.strip()))
 
-        def smart_chunk_by_tokens(self, text, max_tokens, overlap_tokens=OVERLAP_TOKENS):
+        def smart_chunk_by_tokens(text, max_tokens, overlap_tokens=OVERLAP_TOKENS):
             if not text or not text.strip():
                 return []
             text = text.strip()
@@ -180,7 +180,7 @@ class Pipeline:
                     start = end - overlap_tokens
             return chunks
 
-        def validate_and_split_chunk(self, text, max_tokens=None):
+        def validate_and_split_chunk(text, max_tokens=None):
             if max_tokens is None:
                 max_tokens = MAX_API_TOKENS
             if not text or not text.strip():
@@ -201,7 +201,7 @@ class Pipeline:
                     validated_chunks.extend(no_overlap_chunks)
             return validated_chunks
 
-        def create_normal_hierarchical_chunks(self, text, title, url, document_id):
+        def create_normal_hierarchical_chunks(text, title, url, document_id):
             all_chunks = []
             text = text.strip()
             parent_chunks_texts = smart_chunk_by_tokens(text, PARENT_CHUNK_TOKENS)
@@ -256,7 +256,7 @@ class Pipeline:
                     parent_chunk_index += 1
             return all_chunks        
 
-        def process_tables(self, soup):
+        def process_tables(soup):
             tables = soup.find_all('table')
             table_texts = []
             for table in tables:
@@ -275,7 +275,7 @@ class Pipeline:
                 table.decompose()
             return '\n\n'.join(table_texts)
 
-        def process_links(self, soup):
+        def process_links(soup):
             for a in soup.find_all('a'):
                 href = a.get('href', '')
                 text = a.get_text(strip=True)
@@ -284,7 +284,7 @@ class Pipeline:
                 else:
                     a.replace_with(text)
 
-        def clean_html_entry(self, entry):
+        def clean_html_entry(entry):
             html_content = entry.get('content', entry.get('text', ''))
             soup = BeautifulSoup(html_content, 'html.parser')
             table_text = process_tables(soup)
@@ -301,7 +301,7 @@ class Pipeline:
             }
             return cleaned_entry
 
-        def clean_filename(self, title):
+        def clean_filename(title):
             clean_title = re.sub(r'[^\w\s-]', '', title)  
             clean_title = re.sub(r'[-\s]+', '_', clean_title)  
             clean_title = clean_title.strip('_')  

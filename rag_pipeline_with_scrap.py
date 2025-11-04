@@ -703,10 +703,10 @@ class Pipeline:
             logger.info(f"Found {len(manuals)} manuals, processing first {max_manuals}...")
             results = []
             all_chunks = []
-            for i, manual in enumerate(manuals[:1], start=1):
-                logger.info(f"\n{'='*60}")
-                logger.info(f"Processing document {i}/{min(1, len(manuals))}")
-                logger.info(f"{'='*60}")
+            num_to_process = 3
+            target_manuals = manuals[:num_to_process]            
+            for i, manual in enumerate(target_manuals):
+                logger.info(f"f"\n{'='*60}\nProcessing document {i+1}/{len(target_manuals)}: {manual.get('title', 'N/A')}\n{'='*60}")
                 result = await process_document(manual, browser, process_pdfs=True)
                 if result and result.get('chunks'):
                     all_chunks.extend(result['chunks'])

@@ -104,25 +104,29 @@ class Pipeline:
         if not weaviate not in globals():
             logger.error("Weaviate client not installed.")
             return False
-        try:
-            url = self.valves.WEAVIATE_URL
-            parsed = urlparse(url)
-            scheme = parsed.scheme or 'http'
-            grpc_hostname = parsed.hostname.replace("weaviate", "weaviate-grpc", 1)
-            self.weaviate_client = weaviate.connect_to_custom(
-                http_host=parsed.hostname or "weaviate", 
-                http_port=parsed.port or 8080,
-                http_secure=False if scheme == 'http' else True,
-                grpc_host=grpc_hostname,
-                grpc_port=50051,
-                grpc_secure=False if scheme == 'http' else True,
-            )
-            if self.weaviate_client.is_ready():
-                logger.info("Connected to Weaviate (v{self.client_version}) at {url}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to connect to Weaviate: {e}")
-            return False
+        max_retries = 10
+        delay = 5
+        url = self.valves.WEAVIATE_URL
+        parsed = urlparse(url)
+        scheme = parsed.scheme or 'http'
+        grpc_hostname = parsed.hostname.replace("weaviate", "weaviate-grpc", 1)            
+        for attempt in range(1, max_retries + 1):
+            try:
+                self.weaviate_client = weaviate.connect_to_custom(
+                    http_host=parsed.hostname or "weaviate", 
+                    http_port=parsed.port or 8080,
+                    http_secure=False if scheme == 'http' else True,
+                    grpc_host=grpc_hostname,
+                    grpc_port=50051,
+                    grpc_secure=False if scheme == 'http' else True,
+                )
+                if self.weaviate_client.is_ready():
+                    logger.info("Connected to Weaviate (v{self.client_version}) at {url}")
+                    return True
+            except Exception as e:
+                logger.warning(f"Weaviate not ready (attempt {attempt}/{max_retries}): {e}")
+            time.sleep(delay)               
+        raise RuntimeError(f"Failed to connect to Weaviate after {max_retries} attempts")
 
     # ============================================================
     # Scraper + Ingestion

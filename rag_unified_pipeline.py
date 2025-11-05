@@ -19,6 +19,7 @@ import numpy as np
 from typing import List, Dict, Any, Optional, Iterator, Union, Generator
 from urllib.parse import urljoin, urlparse
 from pathlib import Path
+from pydantic import Field
 
 # third-party libs expected in the environment
 try:

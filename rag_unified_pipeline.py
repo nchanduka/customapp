@@ -132,13 +132,6 @@ class Pipeline:
             self.weaviate_client = None
             return
 
-        if getattr(self, "weaviate_client", None) is not None:
-            try:
-                if self.weaviate_client.is_ready():
-                    return
-            except Exception:
-                pass
-
         url = self.valves.WEAVIATE_URL
         parsed = urlparse(url)
         host = parsed.hostname or "weaviate"
@@ -153,19 +146,12 @@ class Pipeline:
                     http_host=host,
                     http_port=port,
                     http_secure=False if scheme == 'http' else True,
-                    grpc_host=None,
-                    grpc_port=None,
+                    grpc_host="localhost",
+                    grpc_port=50051,
                     grpc_secure=False,
                     skip_init_checks=True,
                 )
-                
-                # optional: also disable gRPC usage internally
-                try:
-                    client.config.grpc_enabled = False
-                except Exception:
-                    # attribute may not exist in some 4.x patch levels
-                    pass
-                
+                              
                 if client.is_ready():
                     logger.info("Weaviate is ready.")
                     self.weaviate_client = client

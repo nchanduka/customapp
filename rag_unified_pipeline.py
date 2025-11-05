@@ -154,6 +154,7 @@ class Pipeline:
                     grpc_secure=False if scheme == 'http' else True,
                     skip_init_checks=True,
                 )
+                client.config.grpc_enabled = False
                 if client.is_ready():
                     logger.info("Weaviate is ready.")
                     self.weaviate_client = client

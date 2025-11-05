@@ -19,7 +19,7 @@ import numpy as np
 from typing import List, Dict, Any, Optional, Iterator, Union, Generator
 from urllib.parse import urljoin, urlparse
 from pathlib import Path
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 # third-party libs expected in the environment
 try:
@@ -65,7 +65,7 @@ class Pipeline:
       - serves RAG retrieval + generation for normal queries
     """
 
-    class Valves:
+    class Valves(BaseModel):
         # Minimal set; adapt environment variables / values as needed
         EMBEDDING_MODEL_URL: str = Field(
             default="https://integrate.api.nvidia.com/v1",

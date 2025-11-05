@@ -655,7 +655,7 @@ class Pipeline:
         reporter and reporter(f"Scraper: generated total {len(all_chunks)} chunks. Uploading to Weaviate...")
 
         # ensure weaviate client
-        self.ensure_weaviate_client()
+        # self.ensure_weaviate_client()
         if not self.weaviate_client:
             reporter and reporter("Scraper: could not connect to Weaviate for upload.")
             return
@@ -767,7 +767,7 @@ class Pipeline:
         if k is None:
             k = self.valves.TOP_K
         # ensure weaviate
-        self.ensure_weaviate_client()
+        # self.ensure_weaviate_client()
         if not self.weaviate_client:
             logger.error("Weaviate not available for search.")
             return []
@@ -976,7 +976,7 @@ class Pipeline:
 
         # Normal RAG retrieval flow
         try:
-            self.ensure_weaviate_client()
+            # self.ensure_weaviate_client()
             if not self.weaviate_client:
                 return "Error: Could not connect to Weaviate. Please try again later."
 
@@ -1004,7 +1004,7 @@ class Pipeline:
         logger.info("RAG pipeline startup: ensuring weaviate client")
         try:
             # spawn connection attempt but don't block heavily
-            self.ensure_weaviate_client(max_retries=3, delay=2)
+            self.ensure_weaviate_client(max_retries=3, delay=10)
         except Exception:
             logger.debug("Startup connect attempt failed", exc_info=True)
 

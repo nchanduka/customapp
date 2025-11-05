@@ -783,32 +783,69 @@ class Pipeline:
             if qembed is None:
                 logger.error("Failed to generate query embedding.")
                 return []
-            collection = self.weaviate_client.collections.get(self.valves.COLLECTION_NAME)
+            collection = self.valves.COLLECTION_NAME
+            query_vector = qembed.tolist()
             where_filter = None
             if target_version:
-                where_filter = (
-                    Filter.by_property("document_id").like(f"*{target_version}*")
-                    | Filter.by_property("document_title").like(f"*{target_version}*")
-                )
-            res = collection.query.near_vector(
-                near_vector=qembed.tolist(),
-                limit=k * 3,
-                return_properties=[
-                    "chunk_id",
-                    "chunk_type",
-                    "text",
-                    "title",
-                    "url",
-                    "parent_id",
-                    "chunk_index",
-                    "document_id",
-                    "document_title",
-                    "document_date",
-                ],
-                return_metadata=None,
-                filters=where_filter,
+                where_filter = f"""
+                where: {{
+                  operator: Or
+                  operands: [
+                    {{
+                      path: ["document_id"]
+                      operator: Like
+                      valueText: "*{target_version}*"
+                    }},
+                    {{
+                      path: ["document_title"]
+                      operator: Like
+                      valueText: "*{target_version}*"
+                    }}
+                  ]
+                }}
+                """
+            # build GraphQL query
+            graphql_query = {
+                "query": f"""
+                {{
+                  Get {{
+                    {coll_name}(
+                      nearVector: {{ vector: {json.dumps(query_vector)} }},
+                      limit: {k * 3},
+                      {where_clause}
+                    ) {{
+                      chunk_id
+                      chunk_type
+                      text
+                      title
+                      url
+                      parent_id
+                      chunk_index
+                      document_id
+                      document_title
+                      document_date
+                    }}
+                  }}
+                }}
+                """
+            }
+            # perform REST GraphQL query
+            res = self.weaviate_client._connection.post(
+                path="/v1/graphql",
+                json=graphql_query,
+                timeout=60,
             )
-            objects = [o.properties for o in res.objects] if getattr(res, "objects", None) else []
+    
+            if res.status_code != 200:
+                logger.error(f"GraphQL query failed: {res.status_code} {res.text}")
+                return []
+    
+            data = res.json()
+            objects = (
+                data.get("data", {}).get("Get", {}).get(coll_name, [])
+                if data and "data" in data
+                else []
+            )            
             chunks = []
             # prioritize child chunks, then parent fallback
             for obj in objects:

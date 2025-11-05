@@ -812,7 +812,7 @@ class Pipeline:
                     {collection}(
                       nearVector: {{ vector: {json.dumps(query_vector)} }},
                       limit: {k * 3},
-                      {where_clause}
+                      {where_filter}
                     ) {{
                       chunk_id
                       chunk_type
@@ -830,11 +830,8 @@ class Pipeline:
                 """
             }
             # perform REST GraphQL query
-            res = self.weaviate_client._connection.post(
-                path="/v1/graphql",
-                json=graphql_query,
-                timeout=60,
-            )
+            url = f"{self.valves.WEAVIATE_URL.rstrip('/')}/v1/graphql"
+            res = requests.post(url, json=graphql_query, timeout=60)
     
             if res.status_code != 200:
                 logger.error(f"GraphQL query failed: {res.status_code} {res.text}")

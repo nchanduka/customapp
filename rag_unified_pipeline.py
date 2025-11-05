@@ -809,7 +809,7 @@ class Pipeline:
                 "query": f"""
                 {{
                   Get {{
-                    {coll_name}(
+                    {collection}(
                       nearVector: {{ vector: {json.dumps(query_vector)} }},
                       limit: {k * 3},
                       {where_clause}
@@ -842,7 +842,7 @@ class Pipeline:
     
             data = res.json()
             objects = (
-                data.get("data", {}).get("Get", {}).get(coll_name, [])
+                data.get("data", {}).get("Get", {}).get(collection, [])
                 if data and "data" in data
                 else []
             )            

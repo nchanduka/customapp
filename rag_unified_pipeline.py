@@ -151,7 +151,13 @@ class Pipeline:
                     grpc_secure=False,
                     skip_init_checks=True,
                 )
-                              
+                
+                try:
+                    client._connection.grpc_enabled = False
+                    print("Done")
+                except Exception as e:
+                    logger.warning(f"Could not disable gRPC explicitly: {e}")
+                    
                 if client.is_ready():
                     logger.info("Weaviate is ready.")
                     self.weaviate_client = client

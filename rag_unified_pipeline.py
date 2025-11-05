@@ -66,19 +66,39 @@ class Pipeline:
 
     class Valves:
         # Minimal set; adapt environment variables / values as needed
-        EMBEDDING_MODEL_URL: str = os.getenv("EMBEDDING_MODEL_URL", "https://integrate.api.nvidia.com/v1")
-        EMBEDDING_MODEL_NAME: str = os.getenv("EMBEDDING_MODEL_NAME", "nvidia/nv-embedqa-e5-v5")
-        EMBEDDING_MODEL_API_KEY: str = os.getenv("EMBEDDING_MODEL_API_KEY", "")
-        WEAVIATE_URL: str = os.getenv("WEAVIATE_URL", "http://weaviate.open-webui.svc.cluster.local:80")
-        COLLECTION_NAME: str = os.getenv("COLLECTION_NAME", "HierarchicalManualChunks")
-        LLM_MODEL_URL: str = os.getenv("LLM_MODEL_URL", "https://integrate.api.nvidia.com/v1")
-        LLM_MODEL_NAME: str = os.getenv("LLM_MODEL_NAME", "meta/llama-3.1-8b-instruct")
-        LLM_MODEL_API_KEY: str = os.getenv("LLM_MODEL_API_KEY", "")
-        TOP_K: int = int(os.getenv("TOP_K", "8"))
-        HPE_SUPPORT_PAGE: str = os.getenv(
-            "HPE_SUPPORT_PAGE",
-            "https://support.hpe.com/connect/s/product?language=en_US&kmpmoid=1014847366&tab=manuals&cep=on",
-        )
+        EMBEDDING_MODEL_URL: str = Field(
+            default="https://integrate.api.nvidia.com/v1",
+            description="Embedding Model Endpoint")
+        EMBEDDING_MODEL_NAME: str = Field(
+            default="nvidia/nv-embedqa-e5-v5",
+            description="Embedding Model Name")
+        EMBEDDING_MODEL_API_KEY: str = Field(
+            default="YOUR_EMBEDDING_MODEL_API_KEY",
+            description="API Key for accessing the embedding model")
+        WEAVIATE_URL: str = Field(
+            default="http://weaviate.open-webui.svc.cluster.local:80",
+            description="Weaviate database URL")
+        COLLECTION_NAME: str = Field(
+            default="HierarchicalManualChunks",
+            description="Weaviate collection name")
+        LLM_MODEL_URL: str = Field(
+            default="https://integrate.api.nvidia.com/v1",
+            description="LLM Model Endpoint")
+        LLM_MODEL_NAME: str = Field(
+            default="meta/llama-3.1-8b-instruct",
+            description="LLM Model Name")
+        LLM_MODEL_API_KEY: str = Field(
+            default="YOUR_LLM_MODEL_API_KEY",
+            description="API Key for accessing the LLM model")        
+        TOP_K: int = Field(
+            default=8,
+            description="Number of chunks to retrieve")
+        HPE_BASE_URL: str = Field(
+            default="https://support.hpe.com",
+            description="HPE Support Page URL")
+        HPE_SUPPORT_PAGE: str = Field(
+            default="https://support.hpe.com/connect/s/product?language=en_US&kmpmoid=1014847366&tab=manuals&cep=on",
+            description="HPE Private Cloud AI Support Page")        
 
     def __init__(self):
         self.id = "rag_unified"
@@ -127,10 +147,10 @@ class Pipeline:
                 client = weaviate.connect_to_custom(
                     http_host=host,
                     http_port=port,
-                    http_secure=(scheme == "https"),
+                    http_secure=False if scheme == 'http' else True,
                     grpc_host=host,
                     grpc_port=50051,
-                    grpc_secure=(scheme == "https"),
+                    grpc_secure=False if scheme == 'http' else True,
                 )
                 if client.is_ready():
                     logger.info("Weaviate is ready.")

@@ -152,6 +152,7 @@ class Pipeline:
                     grpc_host=host,
                     grpc_port=50051,
                     grpc_secure=False if scheme == 'http' else True,
+                    skip_init_checks=True,
                 )
                 if client.is_ready():
                     logger.info("Weaviate is ready.")

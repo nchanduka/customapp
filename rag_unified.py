@@ -768,7 +768,7 @@ class Pipeline:
             description="API Key for accessing the embedding model")
         
         WEAVIATE_URL: str = Field(
-            default="http://weaviate:8080",
+            default="http://weaviate.open-webui.svc.cluster.local:80",
             description="Weaviate database URL")
         
         COLLECTION_NAME: str = Field(
@@ -776,13 +776,13 @@ class Pipeline:
             description="Weaviate collection name")
         
         LLM_MODEL_URL: str = Field(
-            default="http://host.docker.internal:11434",
+            default="https://integrate.api.nvidia.com/v1",
             description="LLM Model Endpoint (Ollama)")
         LLM_MODEL_NAME: str = Field(
-            default="llama3.1:8b",
+            default="meta/llama-3.1-8b-instruct",
             description="LLM Model Name")
         LLM_MODEL_API_KEY: str = Field(
-            default="",
+            default="YOUR_LLM_MODEL_API_KEY",
             description="API Key for accessing the LLM model (not needed for local Ollama)")        
         TOP_K: int = Field(
             default=8,
